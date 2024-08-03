@@ -84,7 +84,14 @@ const generateSeatsSQL = (numRecords) => {
   let sql = `INSERT INTO admin_inventory.seats (order_id, section, row, seat)\nVALUES\n`;
 
   for (let i = 0; i < numRecords; i++) {
+    if (orderIds.length === 0) {
+      break; // Stop generating seats if orderIds is empty
+    }
+
     const order_id = getRandomElement(orderIds);
+    // Remove the selected order_id from orderIds
+    orderIds.splice(orderIds.indexOf(order_id), 1);
+
     const section = generateSection();
     const row = generateRandomRow();
     const startSeat = generateRandomNumber(1, 30); // Random starting seat
@@ -97,6 +104,11 @@ const generateSeatsSQL = (numRecords) => {
           : ","
       }\n`;
     }
+  }
+
+  // Remove the trailing comma if the loop was exited early
+  if (sql.endsWith(",\n")) {
+    sql = sql.slice(0, -2) + " ON CONFLICT DO NOTHING;\n";
   }
 
   return sql;
