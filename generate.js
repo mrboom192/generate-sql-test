@@ -50,26 +50,19 @@ const generateEventsSql = (numRecords) => {
 };
 
 const generateOrdersSQL = (numRecords) => {
-  let sql = `INSERT INTO admin_inventory.orders (event_id, box_office, status_id, stock_type_id, seat_note_id, purchase_number, order_number, invoice_number, transfer_email, flipper_email)\nVALUES\n`;
+  let sql = `INSERT INTO admin_inventory.orders (event_id, invoice_number, flipper_email)\nVALUES\n`;
 
   for (let i = 0; i < numRecords; i++) {
-    const event_id = generateRandomNumber(1, numOfEvents);
-    const box_office = generateBoxOffice();
-    const status_id = generateRandomNumber(1, 32);
-    const stock_type_id = generateRandomNumber(1, 6);
-    const seat_note_id = generateRandomNumber(1, 4);
-    const purchase_number = `PO${generateRandomNumber(100000, 999999)}`;
-    const order_number = generateRandomNumber(100000, 999999);
-    const invoice_number = `${generateRandomNumber(
+    const eventId = generateRandomNumber(1, numOfEvents);
+    const invoiceNumber = `${generateRandomNumber(
       23,
       25
     )}-${generateRandomNumber(100000, 999999)}`;
-    const transfer_email = generateEmail();
-    const flipper_email = generateEmail();
+    const flipperEmail = generateEmail();
 
     numOfTicketsets++;
 
-    sql += `('${event_id}','${box_office}',${status_id},${stock_type_id},${seat_note_id},'${purchase_number}','${order_number}','${invoice_number}','${transfer_email}','${flipper_email}')${
+    sql += `('${eventId}','${invoiceNumber}','${flipperEmail}')${
       i === numRecords - 1 ? " ON CONFLICT DO NOTHING;" : ","
     }\n`;
   }
@@ -77,8 +70,8 @@ const generateOrdersSQL = (numRecords) => {
   return sql;
 };
 
-const generateSeatsSQL = () => {
-  let sql = `INSERT INTO admin_inventory.seats (order_id, section, row, seat)\nVALUES\n`;
+const generateTicketsSQL = () => {
+  let sql = `INSERT INTO admin_inventory.ticket (order_id, section, row, seat, status_id, stock_type_id, seat_note_id, order_number, purchase_number, box_office_id, transfer_email)\nVALUES\n`;
 
   for (let i = 0; i < numOfTicketsets; i++) {
     // Get the current order ID (sequentially)
@@ -88,9 +81,17 @@ const generateSeatsSQL = () => {
     const row = generateRandomRow(); // Function to generate a random row
     const startSeat = generateRandomNumber(1, 5); // Random starting seat
     const endSeat = generateRandomNumber(startSeat, 8); // Random ending seat, ensuring it's >= startSeat
+    const orderNumber = generateRandomNumber(100000, 999999);
+    const purchaseNumber = `PO${generateRandomNumber(100000, 999999)}`;
 
     for (let seat = startSeat; seat <= endSeat; seat++) {
-      sql += `('${order_id}', '${section}', '${row}', ${seat})${
+      const statusId = generateRandomNumber(1, 32);
+      const stockTypeId = generateRandomNumber(1, 6);
+      const seatNoteId = generateRandomNumber(1, 4);
+      const boxOfficeId = generateRandomNumber(1, 4);
+      const transferEmail = generateEmail();
+
+      sql += `('${order_id}', '${section}', '${row}', ${seat}, ${statusId}, ${stockTypeId}, ${seatNoteId}, '${orderNumber}', '${purchaseNumber}', ${boxOfficeId}, '${transferEmail}')${
         i === numOfTicketsets - 1 && seat === endSeat
           ? " ON CONFLICT DO NOTHING;"
           : ",\n"
@@ -121,10 +122,10 @@ fs.writeFileSync(
 ); // Write the SQL to a file
 
 // 3
-const seatsSQL = generateSeatsSQL(); // Lastly generate seats
+const ticketsSql = generateTicketsSQL(33000); // Lastly generate seats
 fs.writeFileSync(
-  path.join(outputDir, "populate_seats_test_data_output.sql"),
-  seatsSQL
+  path.join(outputDir, "populate_ticket_test_data_output.sql"),
+  ticketsSql
 ); // Write the SQL to a file
 
 console.log("SQL files generated in the outputs folder");
